@@ -1,24 +1,72 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { ChakraProvider } from '@chakra-ui/react';
+import { Toaster } from 'react-hot-toast';
+
+import { store } from './store';
+import theme from './theme'; // Your Chakra theme
+import ProtectedRoute from './components/common/ProtectedRoute';
+
+// Pages
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import SuperAdminPanel from './pages/dashboard/SuperAdminPanel';
+import CompanyPanel from './pages/dashboard/CompanyPanel';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Provider store={store}>
+      <ChakraProvider theme={theme}>
+        <Router>
+          <div className="App">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard/super-admin/*"
+                element={
+                  <ProtectedRoute roles={['super_admin']}>
+                    <SuperAdminPanel />
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/dashboard/company/*"
+                element={
+                  <ProtectedRoute roles={['company_admin', 'staff']}>
+                    <CompanyPanel />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Default Redirects */}
+              <Route path="/" element={<Navigate to="/auth/login" replace />} />
+              <Route path="*" element={<Navigate to="/auth/login" replace />} />
+            </Routes>
+          </div>
+        </Router>
+        
+        {/* Toast Notifications */}
+        <Toaster
+          position="top-right"
+          reverseOrder={false}
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1F2937',
+              color: '#fff',
+              borderRadius: '12px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            },
+          }}
+        />
+      </ChakraProvider>
+    </Provider>
   );
 }
 
