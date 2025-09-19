@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Drawer,
@@ -21,9 +21,8 @@ import {
   Container,
   Badge,
   useDisclosure,
-  Heading,
   Avatar,
-} from '@chakra-ui/react';
+} from "@chakra-ui/react";
 import {
   FiMenu,
   FiHome,
@@ -35,19 +34,42 @@ import {
   FiUser,
   FiBell,
   FiSearch,
-} from 'react-icons/fi';
+  FiFolderPlus,
+  FiBarChart2,
+  FiFileText,
+  FiTrendingUp,
+  FiCalendar,
+} from "react-icons/fi";
 
-import CompanyDashboard from '../../components/dashboard/CompanyDashboard';
-import UserManagement from '../../components/company/UserManagement';
-import CompanyProfile from '../../components/company/CompanyProfile';
-import SubscriptionDetails from '../../components/company/SubscriptionDetails';
-import Settings from '../../components/settings/Settings';
-import { logoutUser } from '../../store/slices/authSlice';
+// Company Dashboard Components
+import CompanyDashboard from "../../components/dashboard/CompanyDashboard";
+import UserManagement from "../../components/company/UserManagement";
+import CompanyProfile from "../../components/company/CompanyProfile";
+import SubscriptionDetails from "../../components/company/SubscriptionDetails";
+import Settings from "../../components/settings/Settings";
+
+// Project Management Components
+import ProjectManagement from "../../components/projects/ProjectManagement";
+import ProjectDetails from "../../components/projects/ProjectDetails";
+import ProjectForm from "../../components/projects/ProjectForm";
+
+// ✅ UPDATED: Import enhanced progress components
+import ProjectProgressDashboard from "../../components/projects/ProjectProgressDashboard";
+import MonthlyProgressReport from "../../components/projects/MonthlyProgressReport";
+import ProgressTracker from "../../components/projects/ProgressTracker";
+
+// Legacy imports (keep for backward compatibility if needed)
+import ProgressTracking from "../../components/progress/ProgressTracking";
+import MonthlyProgress from "../../components/progress/MonthlyProgress";
+import ProjectReports from "../../components/reports/ProjectReports";
+
+import { logoutUser } from "../../store/slices/authSlice";
+import { ProgressProvider } from "../../contexts/ProgressContext";
 
 // Fixed responsive sidebar width
 const SIDEBAR_WIDTH = {
   base: "0px",
-  lg: "280px"
+  lg: "280px",
 };
 
 const CompanyPanel = () => {
@@ -59,37 +81,102 @@ const CompanyPanel = () => {
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
-    navigate('/auth/login');
+    navigate("/auth/login");
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <FiHome size={20} />, path: '/dashboard/company' },
-    { text: 'Team Management', icon: <FiUsers size={20} />, path: '/dashboard/company/users', adminOnly: true },
-    { text: 'Company Profile', icon: <FiBriefcase size={20} />, path: '/dashboard/company/profile', adminOnly: true },
-    { text: 'Subscription', icon: <FiCreditCard size={20} />, path: '/dashboard/company/subscription' },
-    { text: 'Settings', icon: <FiSettings size={20} />, path: '/dashboard/company/settings' },
+    {
+      text: "Dashboard",
+      icon: <FiHome size={20} />,
+      path: "/dashboard/company",
+      description: "Overview & Analytics",
+    },
+    {
+      text: "Projects",
+      icon: <FiFolderPlus size={20} />,
+      path: "/dashboard/company/projects",
+      description: "Manage Projects",
+    },
+
+    {
+      text: "Team Management",
+      icon: <FiUsers size={20} />,
+      path: "/dashboard/company/users",
+      adminOnly: true,
+      description: "Manage Users",
+    },
+    {
+      text: "Company Profile",
+      icon: <FiBriefcase size={20} />,
+      path: "/dashboard/company/profile",
+      adminOnly: true,
+      description: "Company Settings",
+    },
+    {
+      text: "Subscription",
+      icon: <FiCreditCard size={20} />,
+      path: "/dashboard/company/subscription",
+      description: "Billing & Plans",
+    },
+    {
+      text: "Settings",
+      icon: <FiSettings size={20} />,
+      path: "/dashboard/company/settings",
+      description: "App Settings",
+    },
   ];
 
-  const filteredMenuItems = menuItems.filter(item => 
-    !item.adminOnly || user?.role === 'company_admin'
+  const filteredMenuItems = menuItems.filter(
+    (item) => !item.adminOnly || user?.role === "company_admin"
   );
 
+  const getPageTitle = () => {
+    const currentPath = location.pathname;
+    if (currentPath.includes("/projects/new")) return "Create New Project";
+    if (currentPath.includes("/projects/") && currentPath.includes("/edit"))
+      return "Edit Project";
+    // ✅ UPDATED: Enhanced page title detection
+    if (
+      currentPath.includes("/projects/") &&
+      currentPath.includes("/progress-dashboard")
+    )
+      return "Project Progress Dashboard";
+    if (currentPath.includes("/projects/") && currentPath.includes("/progress"))
+      return "Project Progress Tracking";
+    if (currentPath.includes("/projects/") && currentPath.includes("/monthly"))
+      return "Monthly Progress Report";
+    if (currentPath.includes("/projects/") && currentPath.includes("/reports"))
+      return "Project Reports";
+    if (
+      currentPath.includes("/projects/") &&
+      currentPath.match(/\/projects\/[^\/]+$/)
+    )
+      return "Project Details";
+    if (currentPath.includes("/projects")) return "Project Management";
+
+    const currentItem = filteredMenuItems.find(
+      (item) => item.path === currentPath
+    );
+    return currentItem?.text || "Dashboard";
+  };
+
   const SidebarContent = () => (
-    <Box 
-      h="100vh" 
+    <Box
+      h="100vh"
       w="280px"
       bg="linear-gradient(180deg, #1a202c 0%, #2d3748 100%)"
       position="relative"
       overflow="hidden"
       _before={{
         content: '""',
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        bgGradient: 'linear(to-b, rgba(66, 153, 225, 0.1), rgba(159, 122, 234, 0.05))',
-        pointerEvents: 'none'
+        bgGradient:
+          "linear(to-b, rgba(66, 153, 225, 0.1), rgba(159, 122, 234, 0.05))",
+        pointerEvents: "none",
       }}
     >
       {/* Company Brand Section */}
@@ -108,20 +195,32 @@ const CompanyPanel = () => {
             fontSize="lg"
             boxShadow="0 8px 32px rgba(102, 126, 234, 0.3)"
           >
-            {company?.name?.charAt(0) || 'C'}
+            {company?.name?.charAt(0) || "C"}
           </Box>
           <VStack align="start" spacing={0} flex="1" minW="0">
-            <Text color="white" fontSize="lg" fontWeight="bold" letterSpacing="tight" isTruncated>
-              {company?.name || 'Company Dashboard'}
+            <Text
+              color="white"
+              fontSize="lg"
+              fontWeight="bold"
+              letterSpacing="tight"
+              isTruncated
+            >
+              {company?.name || "Company Dashboard"}
             </Text>
             <Badge
-              colorScheme={subscription?.plan === 'enterprise' ? 'purple' : 'blue'}
+              colorScheme={
+                subscription?.plan === "enterprise"
+                  ? "purple"
+                  : subscription?.plan === "premium"
+                  ? "blue"
+                  : "green"
+              }
               size="sm"
               variant="solid"
               borderRadius="full"
               px={2}
             >
-              {subscription?.plan || 'Free'}
+              {subscription?.plan || "Free"}
             </Badge>
           </VStack>
         </HStack>
@@ -134,8 +233,8 @@ const CompanyPanel = () => {
       {/* User Info */}
       <Box px={6} py={4}>
         <HStack spacing={3}>
-          <Avatar 
-            size="md" 
+          <Avatar
+            size="md"
             name={`${user?.firstName} ${user?.lastName}`}
             bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
             color="white"
@@ -145,12 +244,12 @@ const CompanyPanel = () => {
               {user?.firstName} {user?.lastName}
             </Text>
             <Text color="gray.400" fontSize="xs">
-              {user?.role === 'company_admin' ? 'Administrator' : 'Team Member'}
+              {user?.role === "company_admin" ? "Administrator" : "Team Member"}
             </Text>
           </VStack>
-          <Badge 
-            colorScheme="green" 
-            variant="solid" 
+          <Badge
+            colorScheme="green"
+            variant="solid"
             fontSize="8px"
             borderRadius="full"
           >
@@ -164,9 +263,13 @@ const CompanyPanel = () => {
       </Box>
 
       {/* Navigation Menu */}
-      <VStack spacing={2} px={4} align="stretch" flex="1">
+      <VStack spacing={1} px={4} align="stretch" flex="1" overflowY="auto">
         {filteredMenuItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive =
+            location.pathname === item.path ||
+            (item.path === "/dashboard/company/projects" &&
+              location.pathname.startsWith("/dashboard/company/projects"));
+
           return (
             <Box key={item.text} position="relative">
               <Button
@@ -176,34 +279,58 @@ const CompanyPanel = () => {
                 w="full"
                 h="48px"
                 px={4}
-                bg={isActive ? 'whiteAlpha.100' : 'transparent'}
-                color={isActive ? 'white' : 'gray.300'}
-                _hover={{ 
-                  bg: isActive ? 'whiteAlpha.200' : 'whiteAlpha.100',
-                  color: 'white',
-                  transform: 'translateX(4px)',
+                bg={isActive ? "whiteAlpha.100" : "transparent"}
+                color={isActive ? "white" : "gray.300"}
+                _hover={{
+                  bg: isActive ? "whiteAlpha.200" : "whiteAlpha.100",
+                  color: "white",
+                  transform: "translateX(4px)",
                 }}
-                _active={{ bg: 'whiteAlpha.200' }}
-                fontWeight={isActive ? 'semibold' : 'medium'}
+                _active={{ bg: "whiteAlpha.200" }}
+                fontWeight={isActive ? "semibold" : "medium"}
                 fontSize="14px"
                 borderRadius="xl"
                 transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                 onClick={() => navigate(item.path)}
-                boxShadow={isActive ? '0 4px 20px rgba(102, 126, 234, 0.3)' : 'none'}
+                boxShadow={
+                  isActive ? "0 4px 20px rgba(102, 126, 234, 0.3)" : "none"
+                }
                 position="relative"
                 overflow="hidden"
-                _before={isActive ? {
-                  content: '""',
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '3px',
-                  bgGradient: 'linear(to-b, #667eea, #764ba2)',
-                  borderRadius: 'full'
-                } : {}}
+                _before={
+                  isActive
+                    ? {
+                        content: '""',
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: "3px",
+                        bgGradient: "linear(to-b, #667eea, #764ba2)",
+                        borderRadius: "full",
+                      }
+                    : {}
+                }
               >
-                <Text isTruncated>{item.text}</Text>
+                <VStack align="start" spacing={0} flex="1">
+                  <Text
+                    isTruncated
+                    fontSize="14px"
+                    fontWeight={isActive ? "semibold" : "medium"}
+                  >
+                    {item.text}
+                  </Text>
+                  {item.description && (
+                    <Text
+                      isTruncated
+                      fontSize="10px"
+                      color="gray.400"
+                      opacity={0.8}
+                    >
+                      {item.description}
+                    </Text>
+                  )}
+                </VStack>
               </Button>
               {isActive && (
                 <Box
@@ -238,9 +365,23 @@ const CompanyPanel = () => {
               Subscription Status
             </Text>
             <HStack spacing={2}>
-              <Box w={2} h={2} bg={subscription?.status === 'active' ? 'green.400' : 'orange.400'} borderRadius="full" />
-              <Text color={subscription?.status === 'active' ? 'green.400' : 'orange.400'} fontSize="xs">
-                {subscription?.status === 'active' ? 'Active Plan' : 'Upgrade Available'}
+              <Box
+                w={2}
+                h={2}
+                bg={
+                  subscription?.status === "active" ? "green.400" : "orange.400"
+                }
+                borderRadius="full"
+              />
+              <Text
+                color={
+                  subscription?.status === "active" ? "green.400" : "orange.400"
+                }
+                fontSize="xs"
+              >
+                {subscription?.status === "active"
+                  ? "Active Plan"
+                  : "Upgrade Available"}
               </Text>
             </HStack>
           </VStack>
@@ -250,12 +391,7 @@ const CompanyPanel = () => {
   );
 
   return (
-    <Box 
-      minH="100vh" 
-      bg="#0f1419"
-      w="100vw"
-      overflow="hidden"
-    >
+    <Box minH="100vh" bg="#0f1419" w="100vw" overflow="hidden">
       {/* Top Header - Fixed positioning */}
       <Box
         as="header"
@@ -276,23 +412,28 @@ const CompanyPanel = () => {
             aria-label="open drawer"
             icon={<FiMenu color="white" />}
             onClick={onOpen}
-            display={{ base: 'flex', lg: 'none' }}
+            display={{ base: "flex", lg: "none" }}
             variant="ghost"
             color="white"
-            _hover={{ bg: 'whiteAlpha.100' }}
+            _hover={{ bg: "whiteAlpha.100" }}
             mr={4}
           />
-          
+
           <VStack align="start" spacing={0} flex="1">
-            <Text color="white" fontSize="xl" fontWeight="bold" letterSpacing="tight">
-              Good evening, {user?.firstName}
+            <Text
+              color="white"
+              fontSize="xl"
+              fontWeight="bold"
+              letterSpacing="tight"
+            >
+              {getPageTitle()}
             </Text>
             <Text color="gray.400" fontSize="sm">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </Text>
           </VStack>
@@ -303,7 +444,7 @@ const CompanyPanel = () => {
               icon={<FiSearch />}
               variant="ghost"
               color="gray.300"
-              _hover={{ bg: 'whiteAlpha.100', color: 'white' }}
+              _hover={{ bg: "whiteAlpha.100", color: "white" }}
               borderRadius="xl"
             />
             <Box position="relative">
@@ -312,7 +453,7 @@ const CompanyPanel = () => {
                 icon={<FiBell />}
                 variant="ghost"
                 color="gray.300"
-                _hover={{ bg: 'whiteAlpha.100', color: 'white' }}
+                _hover={{ bg: "whiteAlpha.100", color: "white" }}
                 borderRadius="xl"
               />
               <Badge
@@ -330,7 +471,7 @@ const CompanyPanel = () => {
                 2
               </Badge>
             </Box>
-            
+
             <Menu>
               <MenuButton
                 as={Button}
@@ -338,11 +479,11 @@ const CompanyPanel = () => {
                 p={0}
                 minW="auto"
                 h="auto"
-                _hover={{ transform: 'scale(1.05)' }}
+                _hover={{ transform: "scale(1.05)" }}
                 transition="transform 0.2s"
               >
-                <Avatar 
-                  size="sm" 
+                <Avatar
+                  size="sm"
                   name={`${user?.firstName} ${user?.lastName}`}
                   bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                   color="white"
@@ -350,25 +491,26 @@ const CompanyPanel = () => {
                   borderColor="whiteAlpha.300"
                 />
               </MenuButton>
-              <MenuList 
-                bg="gray.800" 
+              <MenuList
+                bg="gray.800"
                 borderColor="whiteAlpha.200"
                 boxShadow="0 20px 40px rgba(0, 0, 0, 0.3)"
               >
-                <MenuItem 
-                  icon={<FiUser />} 
+                <MenuItem
+                  icon={<FiUser />}
                   bg="transparent"
                   color="white"
-                  _hover={{ bg: 'whiteAlpha.100' }}
+                  _hover={{ bg: "whiteAlpha.100" }}
+                  onClick={() => navigate("/dashboard/company/profile")}
                 >
                   Profile Settings
                 </MenuItem>
-                <MenuItem 
-                  icon={<FiLogOut />} 
+                <MenuItem
+                  icon={<FiLogOut />}
                   onClick={handleLogout}
                   bg="transparent"
                   color="red.300"
-                  _hover={{ bg: 'red.900', color: 'red.200' }}
+                  _hover={{ bg: "red.900", color: "red.200" }}
                 >
                   Sign Out
                 </MenuItem>
@@ -384,18 +526,18 @@ const CompanyPanel = () => {
         left={0}
         top={0}
         h="100vh"
-        display={{ base: 'none', lg: 'block' }}
+        display={{ base: "none", lg: "block" }}
         zIndex={1000}
         css={{
-          '&::-webkit-scrollbar': {
-            width: '4px',
+          "&::-webkit-scrollbar": {
+            width: "4px",
           },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
+          "&::-webkit-scrollbar-track": {
+            background: "transparent",
           },
-          '&::-webkit-scrollbar-thumb': {
-            background: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: '4px',
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(255, 255, 255, 0.2)",
+            borderRadius: "4px",
           },
         }}
       >
@@ -432,15 +574,60 @@ const CompanyPanel = () => {
           bgSize="50px 50px"
           pointerEvents="none"
         />
-        
+
         <Container maxW="full" p={6} position="relative">
-          <Routes>
-            <Route path="/" element={<CompanyDashboard />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/profile" element={<CompanyProfile />} />
-            <Route path="/subscription" element={<SubscriptionDetails />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
+          <ProgressProvider>
+            <Routes>
+              {/* Existing Routes */}
+              <Route path="/" element={<CompanyDashboard />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/profile" element={<CompanyProfile />} />
+              <Route path="/subscription" element={<SubscriptionDetails />} />
+              <Route path="/settings" element={<Settings />} />
+
+              {/* Project Management Routes */}
+              <Route path="/projects" element={<ProjectManagement />} />
+              <Route path="/projects/new" element={<ProjectForm />} />
+              <Route path="/projects/:projectId" element={<ProjectDetails />} />
+              <Route
+                path="/projects/:projectId/edit"
+                element={<ProjectForm />}
+              />
+
+              {/* ✅ UPDATED: Enhanced Progress Routes */}
+              <Route
+                path="/projects/:projectId/progress-dashboard"
+                element={<ProjectProgressDashboard />}
+              />
+              <Route
+                path="/projects/:projectId/progress-report"
+                element={<MonthlyProgressReport />}
+              />
+              <Route
+                path="/projects/:projectId/progress-tracker"
+                element={<ProgressTracker />}
+              />
+
+              {/* Legacy Progress Routes (keep for backward compatibility) */}
+              <Route
+                path="/projects/:projectId/progress"
+                element={<ProgressTracking />}
+              />
+              <Route
+                path="/projects/:projectId/monthly"
+                element={<MonthlyProgress />}
+              />
+              <Route
+                path="/projects/:projectId/reports"
+                element={<ProjectReports />}
+              />
+
+              {/* Dedicated Progress & Analytics Routes */}
+              <Route path="/progress" element={<ProgressTracking />} />
+              <Route path="/monthly" element={<MonthlyProgress />} />
+              <Route path="/analytics" element={<ProjectReports />} />
+            </Routes>
+          </ProgressProvider>
         </Container>
       </Box>
     </Box>

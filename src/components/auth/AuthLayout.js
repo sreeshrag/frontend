@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   Container,
@@ -8,20 +8,20 @@ import {
   useColorModeValue,
   HStack,
   Icon,
-} from '@chakra-ui/react';
-import { FiShield, FiUsers, FiTrendingUp } from 'react-icons/fi';
+} from "@chakra-ui/react";
+import { FiShield, FiUsers, FiTrendingUp } from "react-icons/fi";
 
 const AuthLayout = ({ children, title, subtitle }) => {
   // Move ALL useColorModeValue calls to the top level - before any conditional logic
   const bgGradient = useColorModeValue(
-    'linear(to-br, brand.500, purple.600, pink.500)',
-    'linear(to-br, brand.600, purple.700, pink.600)'
+    "linear(to-br, brand.500, purple.600, pink.500)",
+    "linear(to-br, brand.600, purple.700, pink.600)"
   );
-  
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const overlayBg = useColorModeValue('blackAlpha.50', 'blackAlpha.700');
-  const titleColor = useColorModeValue('gray.800', 'white');
-  const subtitleColor = useColorModeValue('gray.600', 'gray.400');
+
+  const cardBg = useColorModeValue("white", "gray.800");
+  const overlayBg = useColorModeValue("blackAlpha.50", "blackAlpha.700");
+  const titleColor = useColorModeValue("gray.800", "white");
+  const subtitleColor = useColorModeValue("gray.600", "gray.400");
 
   return (
     <Box
@@ -43,7 +43,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
         bg={overlayBg}
         opacity={0.1}
       />
-      
+
       {/* Floating Elements */}
       <Box
         position="absolute"
@@ -71,12 +71,16 @@ const AuthLayout = ({ children, title, subtitle }) => {
       <Container maxW="6xl" px={6}>
         <Box
           display="grid"
-          gridTemplateColumns={{ base: '1fr', lg: '1fr 1fr' }}
+          gridTemplateColumns={{ base: "1fr", lg: "1fr 1fr" }}
           gap={12}
           alignItems="center"
         >
           {/* Left Side - Branding */}
-          <VStack spacing={8} align="start" display={{ base: 'none', lg: 'flex' }}>
+          <VStack
+            spacing={8}
+            align="start"
+            display={{ base: "none", lg: "flex" }}
+          >
             <Box>
               <Heading
                 size="2xl"
@@ -85,14 +89,14 @@ const AuthLayout = ({ children, title, subtitle }) => {
                 lineHeight="1.2"
                 mb={4}
               >
-                Construction & Maintenance Industry
+                SITE SMART
                 <Text as="span" display="block" color="brand.100">
-                  Management Platform
+                  MANPOWER BUDGET TRACKER
                 </Text>
               </Heading>
               <Text fontSize="xl" color="whiteAlpha.800" mb={8}>
-                Streamline your business operations with our comprehensive
-                suite of tools designed for modern teams.
+                Streamline your business operations with our comprehensive suite
+                of tools designed for modern teams.
               </Text>
             </Box>
 
@@ -168,27 +172,17 @@ const AuthLayout = ({ children, title, subtitle }) => {
           >
             <VStack spacing={6} align="start" w="full">
               <Box textAlign="center" w="full">
-                <Heading
-                  size="xl"
-                  fontWeight="700"
-                  color={titleColor}
-                  mb={2}
-                >
+                <Heading size="xl" fontWeight="700" color={titleColor} mb={2}>
                   {title}
                 </Heading>
                 {subtitle && (
-                  <Text
-                    fontSize="md"
-                    color={subtitleColor}
-                  >
+                  <Text fontSize="md" color={subtitleColor}>
                     {subtitle}
                   </Text>
                 )}
               </Box>
 
-              <Box w="full">
-                {children}
-              </Box>
+              <Box w="full">{children}</Box>
             </VStack>
           </Box>
         </Box>
@@ -196,8 +190,13 @@ const AuthLayout = ({ children, title, subtitle }) => {
 
       <style jsx>{`
         @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
         }
       `}</style>
     </Box>

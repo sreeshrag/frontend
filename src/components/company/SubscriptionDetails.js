@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import {
   Box,
   Grid,
@@ -53,7 +54,6 @@ import {
 } from 'react-icons/fi';
 
 import api from '../../services/api';
-import toast from 'react-hot-toast';
 
 const SubscriptionDetails = () => {
   const { subscription: authSubscription, company } = useSelector((state) => state.auth || {});
@@ -119,10 +119,27 @@ const SubscriptionDetails = () => {
   const fetchSubscriptionDetails = async () => {
     try {
       const response = await api.get('/company/subscription');
-      setSubscription(response.data || authSubscription);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch subscription details');
+      }
+      
+      const subData = response.data.data;
+      console.log('Received subscription data:', subData);
+      
+      // Ensure we have a plan, defaulting to free if not set
+      const subscription = {
+        ...subData,
+        plan: subData?.plan || authSubscription?.plan || 'free',
+      };
+      
+      setSubscription(subscription);
     } catch (error) {
       console.error('Failed to fetch subscription:', error);
-      setSubscription(authSubscription || null);
+      // Fall back to auth subscription data or default to free plan
+      const fallbackSub = authSubscription || { plan: 'free' };
+      setSubscription(fallbackSub);
+      toast.error('Failed to load subscription details. Using cached data.');
     } finally {
       setLoading(false);
     }
@@ -130,11 +147,26 @@ const SubscriptionDetails = () => {
 
   const fetchUpgradeRequests = async () => {
     try {
+      console.log('Fetching upgrade requests...');
       const response = await api.get('/company/upgrade-requests');
-      setUpgradeRequests(response.data || []);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch upgrade requests');
+      }
+      
+      const requests = response.data.data || [];
+      console.log('Received upgrade requests:', requests);
+      setUpgradeRequests(requests);
+      
+      return requests;
     } catch (error) {
       console.error('Failed to fetch upgrade requests:', error);
+      console.error('Error details:', {
+        response: error.response?.data,
+        status: error.response?.status
+      });
       setUpgradeRequests([]);
+      toast.error('Failed to load upgrade requests. Please refresh the page.');
     }
   };
 
@@ -145,23 +177,44 @@ const SubscriptionDetails = () => {
   };
 
   const confirmUpgrade = async () => {
-    if (!selectedPlan || submitting) return;
+    if (!selectedPlan || submitting) {
+      console.log('Upgrade canceled - Invalid plan or already submitting:', { selectedPlan, submitting });
+      return;
+    }
     
     setSubmitting(true);
     try {
-      await api.post('/company/upgrade-request', {
+      console.log('Submitting upgrade request for plan:', selectedPlan);
+      
+      const response = await api.post('/company/upgrade-request', {
         requestedPlan: selectedPlan.id,
         requestedPrice: selectedPlan.price,
+        currentPlan: subscription?.plan || company?.subscription?.plan || 'free',
         message: `Requesting upgrade to ${selectedPlan.name} plan`
       });
 
-      toast.success('Upgrade request submitted successfully! Please wait for admin approval.');
+      console.log('Upgrade request response:', response.data);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to submit upgrade request');
+      }
+
+      toast.success(response.data.message);
+      
+      // Update the local state with the new request
+      setUpgradeRequests(prevRequests => [response.data.data, ...prevRequests]);
+      
       onClose();
       setSelectedPlan(null);
-      
-      await fetchUpgradeRequests();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to submit upgrade request');
+      console.error('Upgrade request error:', error);
+      console.error('Error details:', {
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
+      
+      toast.error(error.response?.data?.message || error.message || 'Failed to submit upgrade request');
     } finally {
       setSubmitting(false);
     }

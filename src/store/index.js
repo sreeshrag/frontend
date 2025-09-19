@@ -17,6 +17,9 @@ export const store = configureStore({
     }),
 });
 
+window.__REDUX_STORE__ = store;
+
+export default store;
 // Remove these TypeScript lines:
 // export type RootState = ReturnType<typeof store.getState>;
 // export type AppDispatch = typeof store.dispatch;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -18,7 +18,6 @@ import {
   MenuItem,
   useDisclosure,
   Badge,
-  Heading,
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
@@ -34,6 +33,9 @@ import {
   FiTrendingUp,
   FiBell,
   FiSearch,
+  FiUsers,
+  FiShield,
+  FiDatabase, // ✅ NEW ICON for Master Data
 } from "react-icons/fi";
 
 import SuperAdminDashboard from "../../components/dashboard/SuperAdminDashboard";
@@ -41,6 +43,11 @@ import Analytics from "../../components/superadmin/Analytics";
 import Settings from "../../components/settings/Settings";
 import UpgradeRequests from "../../components/superadmin/UpgradeRequests";
 import CompaniesManagement from "../../components/superadmin/CompaniesManagement";
+import CompanyAccessManagement from "../../components/superadmin/CompanyAccessManagement";
+
+// ✅ NEW IMPORT - Add Master Data Manager
+import MasterDataManager from "../../components/superadmin/MasterDataManager";
+
 import { logoutUser } from "../../store/slices/authSlice";
 
 // Fixed responsive sidebar width
@@ -61,6 +68,7 @@ const SuperAdminPanel = () => {
     navigate("/auth/login");
   };
 
+  // ✅ UPDATED - Added Master Data Management to menu items
   const menuItems = [
     {
       text: "Dashboard",
@@ -68,9 +76,19 @@ const SuperAdminPanel = () => {
       path: "/dashboard/super-admin",
     },
     {
+      text: "Master Data", // ✅ NEW MENU ITEM
+      icon: <FiDatabase size={20} />,
+      path: "/dashboard/super-admin/master-data",
+    },
+    {
       text: "Companies",
-      icon: <FiBriefcase size={20} />,
+      icon: <FiUsers size={20} />, // More intuitive icon for companies
       path: "/dashboard/super-admin/companies",
+    },
+    {
+      text: "Access Management",
+      icon: <FiShield size={20} />,
+      path: "/dashboard/super-admin/access",
     },
     {
       text: "Upgrade Requests",
@@ -151,7 +169,7 @@ const SuperAdminPanel = () => {
         <HStack spacing={3}>
           <Avatar
             size="md"
-            name={`${user?.firstName} ${user?.lastName}`} // This will show initials like "SA"
+            name={`${user?.firstName} ${user?.lastName}`}
             bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
             color="white"
           />
@@ -272,7 +290,7 @@ const SuperAdminPanel = () => {
 
   return (
     <Box minH="100vh" bg="#0f1419" w="100vw" overflow="hidden">
-      {/* Top Header - Fixed positioning with proper width calculation */}
+      {/* Top Header */}
       <Box
         as="header"
         position="fixed"
@@ -298,7 +316,6 @@ const SuperAdminPanel = () => {
             _hover={{ bg: "whiteAlpha.100" }}
             mr={4}
           />
-
           <VStack align="start" spacing={0} flex="1">
             <Text
               color="white"
@@ -317,7 +334,6 @@ const SuperAdminPanel = () => {
               })}
             </Text>
           </VStack>
-
           <HStack spacing={4}>
             <IconButton
               aria-label="search"
@@ -351,7 +367,6 @@ const SuperAdminPanel = () => {
                 3
               </Badge>
             </Box>
-
             <Menu>
               <MenuButton
                 as={Button}
@@ -399,7 +414,7 @@ const SuperAdminPanel = () => {
         </Flex>
       </Box>
 
-      {/* Desktop Sidebar - Fixed positioning */}
+      {/* Desktop Sidebar */}
       <Box
         position="fixed"
         left={0}
@@ -432,7 +447,7 @@ const SuperAdminPanel = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Main Content - Proper margin calculation */}
+      {/* Main Content */}
       <Box
         marginLeft={SIDEBAR_WIDTH}
         pt="70px"
@@ -457,7 +472,12 @@ const SuperAdminPanel = () => {
         <Box p={6} position="relative" maxW="full">
           <Routes>
             <Route path="/" element={<SuperAdminDashboard />} />
+
+            {/* ✅ NEW ROUTE - Master Data Management */}
+            <Route path="/master-data" element={<MasterDataManager />} />
+
             <Route path="/companies" element={<CompaniesManagement />} />
+            <Route path="/access" element={<CompanyAccessManagement />} />
             <Route path="/upgrade-requests" element={<UpgradeRequests />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />

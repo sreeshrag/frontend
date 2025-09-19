@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, Link } from "react-router-dom";
 import {
   VStack,
   HStack,
@@ -18,17 +18,17 @@ import {
   IconButton,
   useColorModeValue,
   Divider,
-} from '@chakra-ui/react';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiGithub } from 'react-icons/fi';
-import { FcGoogle } from 'react-icons/fc';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { loginUser, clearError } from '../../store/slices/authSlice';
+} from "@chakra-ui/react";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiGithub } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { loginUser, clearError } from "../../store/slices/authSlice";
 
 const schema = yup.object({
-  email: yup.string().email('Invalid email').required('Email is required'),
-  password: yup.string().required('Password is required'),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  password: yup.string().required("Password is required"),
 });
 
 const LoginForm = () => {
@@ -45,19 +45,61 @@ const LoginForm = () => {
     resolver: yupResolver(schema),
   });
 
+  // ✅ FIXED: Safe onSubmit function with comprehensive error handling
   const onSubmit = async (data) => {
-    dispatch(clearError());
-    const result = await dispatch(loginUser(data));
-    
-    if (loginUser.fulfilled.match(result)) {
-      const user = result.payload.user;
-      
-      // Redirect based on user role
-      if (user.role === 'super_admin') {
-        navigate('/dashboard/super-admin');
-      } else {
-        navigate('/dashboard/company');
+    try {
+      dispatch(clearError());
+      console.log("Attempting login with:", { email: data.email });
+
+      const result = await dispatch(loginUser(data));
+
+      console.log("Login result:", result);
+
+      if (loginUser.fulfilled.match(result)) {
+        // ✅ Safe access to nested response structure
+        const payload = result.payload;
+        const responseData = payload?.data || payload;
+        const user = responseData?.user;
+
+        console.log("Login response data:", responseData);
+        console.log("User data:", user);
+
+        // ✅ Comprehensive validation before accessing user.role
+        if (!user) {
+          console.error("No user data found in login response:", payload);
+          // Don't navigate, let user try again
+          return;
+        }
+
+        if (!user.role) {
+          console.error("User role is missing:", user);
+          // Don't navigate, let user try again
+          return;
+        }
+
+        console.log("Login successful, user role:", user.role);
+
+        // ✅ Safe role-based navigation
+        switch (user.role) {
+          case "super_admin":
+            navigate("/dashboard/super-admin");
+            break;
+          case "company_admin":
+          case "staff":
+            navigate("/dashboard/company");
+            break;
+          default:
+            console.warn("Unknown user role:", user.role);
+            // Default navigation for unknown roles
+            navigate("/dashboard/company");
+            break;
+        }
+      } else if (loginUser.rejected.match(result)) {
+        console.error("Login failed:", result.error || result.payload);
+        // Error will be shown via Redux state
       }
+    } catch (error) {
+      console.error("Login onSubmit error:", error);
     }
   };
 
@@ -72,7 +114,7 @@ const LoginForm = () => {
 
       <VStack spacing={4} w="full">
         <FormControl isInvalid={!!errors.email}>
-          <FormLabel color={useColorModeValue('gray.700', 'gray.300')}>
+          <FormLabel color={useColorModeValue("gray.700", "gray.300")}>
             Email Address
           </FormLabel>
           <InputGroup>
@@ -80,7 +122,7 @@ const LoginForm = () => {
               <FiMail color="gray" />
             </InputLeftElement>
             <Input
-              {...register('email')}
+              {...register("email")}
               type="email"
               placeholder="Enter your email"
               size="lg"
@@ -96,7 +138,7 @@ const LoginForm = () => {
         </FormControl>
 
         <FormControl isInvalid={!!errors.password}>
-          <FormLabel color={useColorModeValue('gray.700', 'gray.300')}>
+          <FormLabel color={useColorModeValue("gray.700", "gray.300")}>
             Password
           </FormLabel>
           <InputGroup>
@@ -104,8 +146,8 @@ const LoginForm = () => {
               <FiLock color="gray" />
             </InputLeftElement>
             <Input
-              {...register('password')}
-              type={showPassword ? 'text' : 'password'}
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               size="lg"
               borderRadius="lg"
@@ -114,7 +156,7 @@ const LoginForm = () => {
             <InputRightElement>
               <IconButton
                 variant="ghost"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 icon={showPassword ? <FiEyeOff /> : <FiEye />}
                 onClick={() => setShowPassword(!showPassword)}
                 size="sm"
@@ -144,8 +186,7 @@ const LoginForm = () => {
           Sign In
         </Button>
 
-        
-
+        {/* Commented out social login buttons as in original */}
         {/* <HStack spacing={3} w="full">
           <Button
             variant="outline"
@@ -168,17 +209,20 @@ const LoginForm = () => {
         </HStack> */}
       </VStack>
 
-      <Text textAlign="center" color={useColorModeValue('gray.600', 'gray.400')}>
-        Don't have an account?{' '}
-        <ChakraLink
+      <Text
+        textAlign="center"
+        color={useColorModeValue("gray.600", "gray.400")}
+      >
+        {/* Don&apos;t have an account?{" "} */}
+        {/* <ChakraLink
           as={Link}
           to="/auth/register"
           color="brand.500"
           fontWeight="600"
-          _hover={{ textDecoration: 'none', color: 'brand.600' }}
+          _hover={{ textDecoration: "none", color: "brand.600" }}
         >
           Sign up here
-        </ChakraLink>
+        </ChakraLink> */}
       </Text>
     </VStack>
   );

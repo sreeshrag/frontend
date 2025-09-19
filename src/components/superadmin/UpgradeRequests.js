@@ -77,9 +77,14 @@ const UpgradeRequests = () => {
       };
       
       const response = await api.get('/super-admin/upgrade-requests', { params });
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch upgrade requests');
+      }
       setRequests(response.data);
     } catch (error) {
-      toast.error('Failed to fetch upgrade requests');
+      console.error('Error fetching upgrade requests:', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to fetch upgrade requests');
+      setRequests({ items: [], pagination: { totalItems: 0, totalPages: 0, currentPage: 0 } });
     } finally {
       setLoading(false);
     }
@@ -319,10 +324,10 @@ const UpgradeRequests = () => {
                           <Td py={4}>
                             <VStack align="start" spacing={1}>
                               <Text fontWeight="bold" color="white" fontSize="md">
-                                {request.Company?.name}
+                                {request.company?.name || 'N/A'}
                               </Text>
                               <Text fontSize="xs" color="gray.400">
-                                {request.Company?.email}
+                                {request.company?.email || 'N/A'}
                               </Text>
                             </VStack>
                           </Td>
@@ -380,28 +385,48 @@ const UpgradeRequests = () => {
                             </Text>
                           </Td>
                           <Td>
-                            {request.status === 'pending' ? (
-                              <Button
-                                size="sm"
-                                bgGradient="linear(135deg, #22d3ee, #0891b2)"
-                                color="white"
-                                borderRadius="xl"
-                                onClick={() => {
-                                  setSelectedRequest(request);
-                                  setProcessDialogOpen(true);
-                                }}
-                                leftIcon={<FiEye />}
-                                _hover={{
-                                  bgGradient: "linear(135deg, #0891b2, #0e7490)",
-                                  transform: 'translateY(-1px)',
-                                  boxShadow: '0 8px 25px rgba(0,0,0,0.3)'
-                                }}
-                              >
-                                Review
-                              </Button>
-                            ) : (
-                              <Text fontSize="xs" color="gray.500">-</Text>
-                            )}
+                            <HStack spacing={2}>
+                              {request.status === 'pending' ? (
+                                <Button
+                                  size="sm"
+                                  bgGradient="linear(135deg, #22d3ee, #0891b2)"
+                                  color="white"
+                                  borderRadius="xl"
+                                  onClick={() => {
+                                    setSelectedRequest(request);
+                                    setProcessDialogOpen(true);
+                                  }}
+                                  leftIcon={<FiEye />}
+                                  _hover={{
+                                    bgGradient: "linear(135deg, #0891b2, #0e7490)",
+                                    transform: 'translateY(-1px)',
+                                    boxShadow: '0 8px 25px rgba(0,0,0,0.3)'
+                                  }}
+                                >
+                                  Review
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  borderColor="whiteAlpha.200"
+                                  color="gray.300"
+                                  borderRadius="xl"
+                                  onClick={() => {
+                                    setSelectedRequest(request);
+                                    setProcessDialogOpen(true);
+                                  }}
+                                  leftIcon={<FiEye />}
+                                  _hover={{
+                                    bg: 'whiteAlpha.100',
+                                    color: 'white',
+                                    transform: 'translateY(-1px)',
+                                  }}
+                                >
+                                  View Details
+                                </Button>
+                              )}
+                            </HStack>
                           </Td>
                         </Tr>
                       ))
@@ -476,7 +501,7 @@ const UpgradeRequests = () => {
                 >
                   <VStack align="start" spacing={4}>
                     <Heading size="lg" color="white">
-                      {selectedRequest.Company?.name}
+                      {selectedRequest.company?.name || 'N/A'}
                     </Heading>
                     
                     <Grid templateColumns="1fr 1fr" gap={6} w="full">
@@ -554,29 +579,33 @@ const UpgradeRequests = () => {
                 color="gray.300"
                 borderRadius="xl"
               >
-                Cancel
+                {selectedRequest?.status === 'pending' ? 'Cancel' : 'Close'}
               </Button>
-              <Button 
-                onClick={() => handleProcessRequest('reject')} 
-                colorScheme="red"
-                variant="outline"
-                leftIcon={<FiX />}
-                borderRadius="xl"
-              >
-                Reject Request
-              </Button>
-              <Button 
-                onClick={() => handleProcessRequest('approve')} 
-                bgGradient="linear(135deg, #10b981, #059669)"
-                color="white"
-                leftIcon={<FiCheckCircle />}
-                borderRadius="xl"
-                _hover={{
-                  bgGradient: "linear(135deg, #059669, #047857)",
-                }}
-              >
-                Approve Request
-              </Button>
+              {selectedRequest?.status === 'pending' && (
+                <>
+                  <Button 
+                    onClick={() => handleProcessRequest('reject')} 
+                    colorScheme="red"
+                    variant="outline"
+                    leftIcon={<FiX />}
+                    borderRadius="xl"
+                  >
+                    Reject Request
+                  </Button>
+                  <Button 
+                    onClick={() => handleProcessRequest('approve')} 
+                    bgGradient="linear(135deg, #10b981, #059669)"
+                    color="white"
+                    leftIcon={<FiCheckCircle />}
+                    borderRadius="xl"
+                    _hover={{
+                      bgGradient: "linear(135deg, #059669, #047857)",
+                    }}
+                  >
+                    Approve Request
+                  </Button>
+                </>
+              )}
             </HStack>
           </ModalFooter>
         </ModalContent>
